@@ -21,11 +21,16 @@ export const ReservationDetail = ({ ...props }) => {
     opacity: 0, display: "none"
   }))
   const reservationService = useReservationService();
-  const messageService = useMessageService(["reservationOpen"], (m) => {
-    if (m['data'])
-      setReservation(m['data'])
-    setOpen(true)
-  });
+
+  const {message,publish} = useMessageService(["reservationOpen"]);
+
+  useEffect(() => {
+    if(message){
+      setReservation(message['data'])
+      setOpen(true)
+    }
+  },[message])
+
   useEffect(() => {
     if (!open) {
       if (width > 700)
@@ -45,7 +50,7 @@ export const ReservationDetail = ({ ...props }) => {
   const confirm = () => {
     reservationService.confirm(reservation['id']).then((code) => {
       if (code === 1)
-        messageService.publish({ name: "reservationUpdated", data: reservation })
+        publish({ name: "reservationUpdated", data: reservation })
       setOpen(false)
     })
   }

@@ -114,20 +114,25 @@ export const ReservationEdit = ({ ...props }) => {
   const [open, setOpen] = React.useState(false);
   const { width, height } = useWindowDimension();
   const reservationService = useReservationService(useContext(ReservationContext));
-  const messageService = useMessageService(["reservationCreateOpen", "reservationEditOpen"], (m) => {
-    setErrors(null)
-    switch (m['name']) {
-      case "reservationCreateOpen":
-        setReservation({ id: 0 })
-        break;
-      case "reservationEditOpen":
-        setReservation(m['data'])
-        break;
-      default:
-        break;
+  const {message,publish} = useMessageService(["reservationCreateOpen", "reservationEditOpen"]);
+
+  useEffect(() => {
+    if(message){
+      setErrors(null)
+      switch (message['name']) {
+        case "reservationCreateOpen":
+          setReservation({ id: 0 })
+          break;
+        case "reservationEditOpen":
+          setReservation(message['data'])
+          break;
+        default:
+          break;
+      }
+      setOpen(true)
     }
-    setOpen(true)
-  });
+  },[message])
+
   const [styles, api] = useSpring(() => ({
     opacity: 0, x: 0, y: 0, borderRadius: 0
   }));
@@ -159,7 +164,7 @@ export const ReservationEdit = ({ ...props }) => {
         reservationService.createReservation(reservation).then((r)=>setOpen(false))
      }else{ 
         await reservationService.updateReservation(reservation);
-        messageService.publish({name:"reservationUpdated",data:reservation})
+        publish({name:"reservationUpdated",data:reservation})
         setOpen(false);
      }
   }

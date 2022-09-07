@@ -11,34 +11,32 @@ import './reservation.css';
 export default function ReservationSearch({ ...props }){
   const { width, height } = useWindowDimension();
   const [reservations, setReservations] = React.useState(props.reservations?props.reservations:[])
-  const [refresh, setRefresh] = React.useState(Date.now())
   const reservationService = useReservationService();
-  const messageService = useMessageService(["reservationUpdated"], messageHandle);
+  const {message,publish}= useMessageService(["reservationUpdated"]);
 
-  function messageHandle(m){
-
-    const reservation = m['data']
-    const rs = reservations.filter((r)=>r['id']===reservation['id']);
-    if(rs&&rs.length==1){
-       Object.assign(rs[0],reservation)
-       setRefresh(Date.now())
+  useEffect(() => {
+    if(message){
+      const reservation = message['data']
+      const rs = reservations.filter((r)=>r['id']===reservation['id']);
+      if(rs&&rs.length==1){
+         Object.assign(rs[0],reservation)
+         setReservations([...reservations])
+      }
     }
-  }
+  },[message])
+
+
   const search=(word)=>{
       reservationService.searchReservations(word).then((rs)=>{
-         reservations.length=0;
-         reservations.push(...rs)
-         setRefresh(Date.now())
+          setReservations(rs)
       })
   }
   const remove= async (e,reservation)=>{
      e.stopPropagation();
      reservationService.removeReservation(reservation['id']).then((res)=>{
-        let index = reservations.findIndex((r)=>r['id']==reservation['id']);
-        reservations.splice(index,1);
-        setRefresh(Date.now())
+        let rs = reservations.filter((r)=>r['id']!==reservation['id']);
+        setReservations(rs)
      })
-
   }
   return (
     <>
@@ -49,11 +47,11 @@ export default function ReservationSearch({ ...props }){
           <div style={{ width: width > 700 ? 400 : 240 }}>
             <SearchBar onSearch={search}/>
           </div>
-          <div className="search-bar-new" style={{ width: width > 700 ? 120 : 60}} onClick={() => messageService.publish({ name: "reservationCreateOpen"})}>{width > 700 ? <span style={{ fontSize: 12 }}>New Reserveration</span> : <span style={{ fontSize: "15px" }}><AddIcon /></span>}</div>
+          <div className="search-bar-new" style={{ width: width > 700 ? 120 : 60}} onClick={() =>publish({ name: "reservationCreateOpen"})}>{width > 700 ? <span style={{ fontSize: 12 }}>New Reserveration</span> : <span style={{ fontSize: "15px" }}><AddIcon /></span>}</div>
         </div>
         <div style={{ height: 40 }} />
         {reservations && reservations.map((c, index) =>
-          <div key={c['id'] + "m"} style={{ width: "95%" }} onClick={() => messageService.publish({ name: "reservationOpen",data:c})}>
+          <div key={c['id'] + "m"} style={{ width: "95%" }} onClick={() => publish({ name: "reservationOpen",data:c})}>
             <div key="head1" className="search-item-container">
               <div className="search-item-content">
                 <div><span style={{ fontSize: "12px" }}>{c['firstName'] + " " + c['lastName']}</span></div>
@@ -63,7 +61,7 @@ export default function ReservationSearch({ ...props }){
                 </> : <div style={{ fontSize: 14 }}><span>{c['phone'] ? c['phone'] : c['email']}</span></div>}
                 <div><span style={{ fontSize: 14 }}>{c['confirm'] ? "Confirmed" : "To Confirm"}</span></div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:110}}>
-                  <div className="search-item-btn"  onClick={(e) => { e.stopPropagation(); messageService.publish({ name: "reservationEditOpen", data: JSON.parse(JSON.stringify(c)) }) }}><span style={{ fontSize: 14 }}>Edit</span></div>
+                  <div className="search-item-btn"  onClick={(e) => { e.stopPropagation(); publish({ name: "reservationEditOpen", data: JSON.parse(JSON.stringify(c)) }) }}><span style={{ fontSize: 14 }}>Edit</span></div>
                   <div className="search-item-btn"  onClick={(e)=>remove(e,c)}><span style={{ fontSize: 14 }}>Delete</span></div>
                 </div>
               </div>

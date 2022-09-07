@@ -5,10 +5,6 @@ import reservations from "../view/reservation/reservations.json";
 export default {
   title: 'Reservation',
   component:ReservationSearch,
-  parameters: {
-    // More on Story layout: https://storybook.js.org/docs/react/configure/story-layout
-    layout: 'fullscreen',
-  },
 };
 
 export const  Search = (args) => <ReservationSearch {...args}/>;

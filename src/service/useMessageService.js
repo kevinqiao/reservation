@@ -1,29 +1,25 @@
 
-
-import{ useEffect} from "react";
+import React, { useEffect,useContext } from 'react';
 import { Subject } from 'rxjs';
 
 const subject = new Subject();
 
-export const messageService = {
-    sendMessage: message => subject.next(message),
-    clearMessages: () => subject.next(),
-    onMessage: () => subject.asObservable()
-};
-export default function useMessageService(selectors,handle) {
- 
+export default function useMessageService(selectors) {
+  const [event,setEvent] = React.useState(null);
+  const [message,setMessage] = React.useState(null);
   useEffect(() => {
-  
-    const subscription = messageService.onMessage().subscribe(msg => {
-           if(handle&&selectors.includes(msg['name']))
-               handle(msg);
-    });
-
-    return subscription.unsubscribe;
-  }, [])
+    const observable = subject.asObservable()
+    observable.subscribe(setEvent);
+    return ()=>observable.unsubscribe;
+  },[])
+  useEffect(() => {
+    if(event&&(!selectors||selectors.includes(event['name'])))
+       setMessage(event)
+  },[event])
   const publish=(msg)=>{
-      messageService.sendMessage(msg);
+       subject.next(msg)
   }
-  return {publish}
+
+  return {message,publish}
 }
 
